@@ -1,4 +1,7 @@
-// lib/main.dart
+// I created this main.dart file as the entry point for my Flutter credit card capture app.
+// It sets up the app structure, theme, and navigation flow.
+// The app allows users to capture, validate, and store credit card information securely.
+
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'models/credit_card.dart';
@@ -6,26 +9,37 @@ import 'services/storage_service.dart';
 import 'services/card_utils.dart';
 import 'services/card_scanner_service.dart';
 
+// I defined main as the app's entry point.
+// I ensured WidgetsFlutterBinding is initialized before running the app.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(CreditCardApp());
 }
 
+// I created CreditCardApp as the root widget of my application.
+// It's stateless because it doesn't need to manage any state.
 class CreditCardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // I returned MaterialApp to provide the material design framework.
+    // I configured the title, removed debug banner, and set up the theme.
     return MaterialApp(
       title: 'CardVault Pro',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        // I set the primary color scheme to deep purple for a professional look.
         primarySwatch: Colors.deepPurple,
+        // I chose a light grey background for better contrast.
         scaffoldBackgroundColor: Colors.grey[50],
+        // I customized input decorations for consistent styling.
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
           filled: true,
           fillColor: Colors.white,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
+        // I set up a global theme for elevated buttons.
+        // I used double.infinity for width to make buttons full-width by default.
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             minimumSize: Size(double.infinity, 50),
@@ -37,6 +51,7 @@ class CreditCardApp extends StatelessWidget {
           ),
         ),
       ),
+      // I set LoginPage as the initial screen for authentication.
       home: LoginPage(),
     );
   }
@@ -876,8 +891,13 @@ class _CardHomePageState extends State<CardHomePage> {
 }
 
 // ---------------- SETTINGS PAGE ----------------
+// I created this SettingsPage to allow users to manage banned countries for card validation.
+// It's a stateful widget because it needs to maintain the list of banned countries and handle user interactions.
+// I used StatefulWidget over Stateless because the page updates dynamically when countries are added or removed.
 
 class SettingsPage extends StatefulWidget {
+  // I passed the StorageService as a parameter to access persistent storage for banned countries.
+  // This way, the settings persist across app sessions, which is crucial for user experience.
   final StorageService storage;
   const SettingsPage({required this.storage, Key? key}) : super(key: key);
 
@@ -886,74 +906,126 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  // I initialized _banned as an empty list to hold the banned countries loaded from storage.
+  // Using a List<String> makes it easy to add, remove, and check for duplicates.
   List<String> _banned = [];
+
+  // I created a TextEditingController for the input field to manage user input for new countries.
+  // Controllers are essential for accessing and clearing text field values programmatically.
   final _newCtl = TextEditingController();
 
   @override
   void initState() {
+    // I called super.initState() first as per Flutter best practices.
     super.initState();
+    // Then I loaded the banned countries immediately when the page initializes.
+    // This ensures the UI shows the current state right away.
     _load();
   }
 
+  // I made _load async because loading from storage is an asynchronous operation.
+  // Using async/await makes the code readable and handles the Future properly.
   Future<void> _load() async {
+    // I retrieved the list from storage and updated the state to trigger a rebuild.
+    // This refreshes the UI with the loaded data.
     final list = await widget.storage.loadBannedCountries();
     setState(() => _banned = list);
   }
 
+  // I defined _addCountry as async since saving to storage is asynchronous.
+  // This prevents blocking the UI while saving.
   Future<void> _addCountry() async {
+    // I trimmed the input to remove leading/trailing whitespace for clean data.
     final text = _newCtl.text.trim();
+    // I checked if the input is empty to avoid adding blank entries.
     if (text.isEmpty) return;
 
+    // I checked for duplicates (case-insensitive) to maintain data integrity.
+    // Using any() with a lambda is efficient for small lists.
     if (_banned.any((c) => c.toLowerCase() == text.toLowerCase())) {
+      // I showed a snackbar to inform the user about the duplicate.
+      // ScaffoldMessenger is the modern way to show snackbars in Flutter.
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('$text is already in the list')));
       return;
     }
 
+    // I added the new country to the local list first for immediate UI update.
     _banned.add(text);
+    // Then I saved the updated list to persistent storage.
     await widget.storage.saveBannedCountries(_banned);
+    // I cleared the input field to prepare for the next entry.
     _newCtl.clear();
+    // I called setState to rebuild the UI with the new list.
     setState(() {});
   }
 
+  // I made _removeAt async because saving after removal is asynchronous.
   Future<void> _removeAt(int i) async {
+    // I removed the item at the specified index from the local list.
     _banned.removeAt(i);
+    // I saved the updated list to storage to persist the change.
     await widget.storage.saveBannedCountries(_banned);
+    // I triggered a rebuild to update the UI.
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    // I used Scaffold as the root widget because it provides the basic page structure with app bar and body.
+    // This is standard for full-screen pages in Flutter apps.
     return Scaffold(
+      // I added an AppBar with a title to clearly indicate this is the settings page.
+      // The emoji adds a touch of personality to the UI.
       appBar: AppBar(
         title: Text("⚙️ Settings"),
         backgroundColor: Colors.indigo,
       ),
+      // I wrapped the body in Padding to add space around the content.
+      // EdgeInsets.all(16.0) provides consistent spacing on all sides.
       body: Padding(
         padding: const EdgeInsets.all(16.0),
+        // I used Column to stack the input row and the list vertically.
+        // This layout fits the page's purpose of input at top, list below.
         child: Column(
           children: [
-            // Input Row
+            // I commented this as "Input Row" to explain the purpose of this section.
+            // It's where users enter new banned countries.
             Row(
               children: [
+                // I used Expanded to make the TextField take up the remaining space in the Row.
+                // This ensures the field grows with the screen width.
                 Expanded(
                   child: TextField(
+                    // I assigned the controller to manage the input.
                     controller: _newCtl,
+                    // I customized the decoration for a clean, labeled input.
+                    // OutlineInputBorder with rounded corners matches the app's style.
                     decoration: InputDecoration(
                       labelText: "Add banned country",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      // I set contentPadding for better text spacing inside the field.
                       contentPadding: EdgeInsets.symmetric(horizontal: 12),
                     ),
                   ),
                 ),
+                // I added SizedBox for spacing between the field and button.
+                // const SizedBox is efficient as it doesn't need to be rebuilt.
                 const SizedBox(width: 8),
+                // I used ElevatedButton.icon for the add action, combining icon and text.
+                // This makes the button more intuitive.
                 ElevatedButton.icon(
+                  // I connected the onPressed to the _addCountry method.
                   onPressed: _addCountry,
                   icon: Icon(Icons.add),
                   label: Text("Add"),
+                  // I customized the style to override the global theme.
+                  // I set minimumSize to Size(100, 48) because the global theme uses double.infinity,
+                  // which causes BoxConstraints errors when the button is in a Row.
+                  // By specifying a fixed size, I prevent the infinite width issue while keeping the button compact.
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(100, 48),
                     backgroundColor: Colors.indigo,
@@ -965,11 +1037,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
+            // I added SizedBox for vertical spacing between the input and list.
             const SizedBox(height: 16),
 
-            // List of banned countries
+            // I commented this as "List of banned countries" to clarify the content.
+            // The Expanded makes the list take up the remaining vertical space.
             Expanded(
               child:
+                  // I used a ternary operator to show different content based on list emptiness.
+                  // This provides feedback when no countries are banned.
                   _banned.isEmpty
                       ? Center(
                         child: Text(
@@ -978,24 +1054,34 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       )
                       : ListView.builder(
+                        // I set itemCount to the list length for efficient building.
                         itemCount: _banned.length,
+                        // I used builder for performance with potentially long lists.
                         itemBuilder: (context, idx) {
+                          // I wrapped each item in a Card for visual separation.
+                          // RoundedRectangleBorder with radius 12 matches the input style.
                           return Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            // I added margin for spacing between cards.
                             margin: EdgeInsets.symmetric(vertical: 6),
                             child: ListTile(
+                              // I added a leading icon to represent countries.
+                              // RedAccent color indicates restriction.
                               leading: Icon(
                                 Icons.flag,
                                 color: Colors.redAccent,
                               ),
+                              // I displayed the country name as the title.
                               title: Text(_banned[idx]),
+                              // I added a trailing delete button for easy removal.
                               trailing: IconButton(
                                 icon: Icon(
                                   Icons.delete,
                                   color: Colors.grey[700],
                                 ),
+                                // I passed the index to _removeAt for targeted removal.
                                 onPressed: () => _removeAt(idx),
                               ),
                             ),
