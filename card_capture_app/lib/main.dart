@@ -876,12 +876,13 @@ class _CardHomePageState extends State<CardHomePage> {
 }
 
 // ---------------- SETTINGS PAGE ----------------
+
 class SettingsPage extends StatefulWidget {
   final StorageService storage;
-  SettingsPage({required this.storage});
+  const SettingsPage({required this.storage, Key? key}) : super(key: key);
 
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
@@ -902,190 +903,100 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _addCountry() async {
     final text = _newCtl.text.trim();
     if (text.isEmpty) return;
+
     if (_banned.any((c) => c.toLowerCase() == text.toLowerCase())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('⚠️ "$text" is already in the list'),
-          backgroundColor: Colors.orange.shade400,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$text is already in the list')));
       return;
     }
+
     _banned.add(text);
     await widget.storage.saveBannedCountries(_banned);
     _newCtl.clear();
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ "$text" added to banned countries'),
-        backgroundColor: Colors.teal.shade400,
-      ),
-    );
   }
 
   Future<void> _removeAt(int i) async {
-    final removed = _banned[i];
     _banned.removeAt(i);
     await widget.storage.saveBannedCountries(_banned);
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🗑️ "$removed" removed from banned countries'),
-        backgroundColor: Colors.red.shade400,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Security Settings'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple.shade800,
-        elevation: 2,
+        title: Text("⚙️ Settings"),
+        backgroundColor: Colors.indigo,
       ),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.do_not_disturb_on,
-                          color: Colors.orange.shade400,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Banned Countries',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple.shade800,
-                          ),
-                        ),
-                      ],
+            // Input Row
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _newCtl,
+                    decoration: InputDecoration(
+                      labelText: "Add banned country",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Cards from these countries will be rejected',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _newCtl,
-                            decoration: InputDecoration(
-                              labelText: 'Add banned country',
-                              prefixIcon: Icon(
-                                Icons.public_off,
-                                color: Colors.deepPurple.shade400,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey.shade50,
-                            ),
-                            onSubmitted: (_) => _addCountry(),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.deepPurple, Colors.purple],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _addCountry,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: Text('Add'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _addCountry,
+                  icon: Icon(Icons.add),
+                  label: Text("Add"),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(100, 48),
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+
+            // List of banned countries
             Expanded(
               child:
                   _banned.isEmpty
                       ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline,
-                              size: 64,
-                              color: Colors.green.shade400,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No countries banned',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            Text(
-                              'All countries are allowed',
-                              style: TextStyle(color: Colors.grey.shade500),
-                            ),
-                          ],
+                        child: Text(
+                          "No banned countries configured",
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       )
                       : ListView.builder(
                         itemCount: _banned.length,
                         itemBuilder: (context, idx) {
                           return Card(
-                            margin: EdgeInsets.symmetric(vertical: 6),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            elevation: 2,
+                            margin: EdgeInsets.symmetric(vertical: 6),
                             child: ListTile(
-                              leading: Container(
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade100,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.block,
-                                  color: Colors.orange.shade600,
-                                  size: 20,
-                                ),
+                              leading: Icon(
+                                Icons.flag,
+                                color: Colors.redAccent,
                               ),
-                              title: Text(
-                                _banned[idx],
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
+                              title: Text(_banned[idx]),
                               trailing: IconButton(
                                 icon: Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red.shade400,
+                                  Icons.delete,
+                                  color: Colors.grey[700],
                                 ),
                                 onPressed: () => _removeAt(idx),
-                                tooltip: 'Remove',
                               ),
                             ),
                           );
