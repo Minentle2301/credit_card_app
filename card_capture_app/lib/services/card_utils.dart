@@ -18,28 +18,16 @@ class CardUtils {
     }
     // I handled MasterCard ranges: 51-55 and 2221-2720.
     // I used two regex patterns for clarity and accuracy.
-    if (RegExp(r'^(5[1-5])').hasMatch(n) ||
-        RegExp(
-          r'^(222[1-9]|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)',
-        ).hasMatch(n)) {
+    if (RegExp(r'^5[1-5]').hasMatch(n)) {
       return 'MasterCard';
     }
-    // I checked for American Express starting with 34 or 37.
-    if (RegExp(r'^(34|37)').hasMatch(n)) {
-      return 'American Express';
+    // Mastercard 2-series (2221-2720)
+    if (RegExp(
+      r'^(222[1-9]|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)',
+    ).hasMatch(n)) {
+      return 'MasterCard';
     }
-    // I handled Discover cards with various prefixes.
-    if (RegExp(r'^(6011|65|64[4-9]|622)').hasMatch(n)) {
-      return 'Discover';
-    }
-    // I checked for Diners Club with specific prefixes.
-    if (RegExp(r'^(36|38|30[0-5])').hasMatch(n)) {
-      return 'Diners Club';
-    }
-    // I checked for JCB cards starting with 35.
-    if (RegExp(r'^(35)').hasMatch(n)) {
-      return 'JCB';
-    }
+
     // I returned 'Unknown' for unrecognized prefixes.
     return 'Unknown';
   }
@@ -79,13 +67,13 @@ class CardUtils {
   }
 
   // I created validateCVV to check CVV length based on card type.
-  // American Express uses 4 digits, others use 3.
+  // Uknown uses 4 digits, others use 3.
   // This ensures proper security code validation.
   static bool validateCVV(String cvv, String cardType) {
     // I extracted only digits from the CVV input.
     final digits = cvv.replaceAll(RegExp(r'\D'), '');
-    // I checked for American Express requiring 4 digits.
-    if (cardType == 'American Express') {
+    // I checked for Uknown requiring 4 digits.
+    if (cardType == 'Uknown') {
       return digits.length == 4;
     }
     // I defaulted to 3 digits for other card types.
